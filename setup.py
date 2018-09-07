@@ -33,6 +33,8 @@ def grep(attrname):
 
 install_requires = [
     'Flask>=0.9',
+    'PyJWT==1.6.4',
+    'bcrypt==3.1.4',
     'pydash==4.7.0'
 ]
 

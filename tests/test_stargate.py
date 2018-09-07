@@ -45,4 +45,33 @@ class TestStargate(unittest.TestCase):
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).upper()
 
+    def test_equal_validator_validate(self):
+        from stargate.authentication import Authentication
+        makan = True
+
+        mm = Authentication()
+        print(mm.set_password('123456', 10))
+
+        self.assertEqual(makan, True)
+
+    def test_equal_is_password(self):
+        from stargate.authentication import Authentication
+        m = '$2b$10$5eTcbolJokO2aj309mJIhuSn3.gz/AUx67x29jquDWMu71X4JihsW'
+        n = '$2b$10$aqqSjRDLLj4T2ioUZ76diO6B.Gj7Y.afHjTGIbbbOsFnG10xSH6va'
+
+        self.assertEqual(Authentication().is_password(m, '123456'), True)
+        self.assertEqual(Authentication().is_password(n, '123456'), True)
+
+    def test_equal_generate_token(self):
+        from stargate.base import Startgate
+
+        token = Startgate().encode_auth_token(secret='123456', user_id='12345', sender_id='sender-1234', recipients_id='recipients-1234')
+        response_auth = Startgate().decode_auth_token(secret='123456', auth_token=token[1], recipients_id='recipients-1234')
+        print(response_auth)
+
+
+
+
+
+
     # runs the unit tests in the module
