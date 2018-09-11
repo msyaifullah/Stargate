@@ -2,6 +2,8 @@ import re
 import os
 import glob
 
+import datetime
+import jwt
 import json
 import pydash
 import logging
@@ -69,8 +71,46 @@ class TestStargate(unittest.TestCase):
         response_auth = Startgate().decode_auth_token(secret='123456', auth_token=token[1], recipients_id='recipients-1234')
         print(response_auth)
 
+    def test_generate_dict(self):
+        expiration = 3600
+        user_id = 'user-12345'
+        sender_id = ''
+        recipients_id = 'recipient-12345'
 
+        payload = {
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=expiration),  # (expiration time)
+            'iat': datetime.datetime.utcnow(),  # (issued at)
+            'sub': user_id,  # (subject)
+        }
 
+        if sender_id is not None:
+            payload['iss'] = sender_id  # (issuer)
+
+        if recipients_id is not None:
+            payload['aud'] = recipients_id  # (audience)
+
+        print(payload)
+
+    def test_generate(self):
+        from stargate.base import _jwt_decode
+        from stargate.base import _jwt_encode
+
+        payload, token = _jwt_encode(secret='123456', user_id='12345', sender_id='sender-1234', recipients_id='recipients-1234')
+        try:
+            decoded_payload = _jwt_decode(secret='123456', auth_token=token, recipients_id='recipients-1234')
+        except jwt.InvalidAudience:
+            print "error this invalid audience"
+        except jwt.ExpiredSignature:
+            print "error this signature"
+        except jwt.InvalidIssuer:
+            print "invalid issuer"
+        except Exception, e:
+            print("error")
+            print(e.message)
+
+        print(payload)
+        print(token)
+        print(decoded_payload)
 
 
 

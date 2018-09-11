@@ -1,13 +1,17 @@
-from functools import wraps
 from flask import request
+from functools import wraps
 from flask import current_app as app
 
 from stargate.error.error_auth import AuthError
+from stargate.error.error_general import GeneralError
 from stargate.error.error_device import DeviceError
 
-from stargate.authentication import BlacklistToken
-
-import jwt
+from stargate.base import BlacklistToken
+from stargate.base import decode_auth_token
+from stargate.base import decode_refresh_token
+from jwt import InvalidIssuer
+from jwt import InvalidAudience
+from jwt import ExpiredSignature
 
 
 def check_auth(username, password):
@@ -26,22 +30,27 @@ def check_auth_bearer(token):
     :return:
     """
     try:
-        if BlacklistToken.check_blacklist(token):
-            raise AuthError({
-                "code": "Unauthorized",
-                "description": "Token blacklisted. Please log in again."
-            })
-        payload = jwt.decode(token, app.config.get('SECRET_KEY'))
+        payload, status = decode_auth_token(app.config.get('SECRET_KEY'), token)
         return True, payload
-    except jwt.ExpiredSignatureError:
+    except InvalidIssuer:
+        raise AuthError({
+            "code": "Unauthorized",
+            "description": "Invalid Issuer. Please contact admin for this issues."
+        })
+    except InvalidAudience:
+        raise AuthError({
+            "code": "Unauthorized",
+            "description": "Invalid Audience. Please contact admin for this issues."
+        })
+    except ExpiredSignature:
         raise AuthError({
             "code": "Unauthorized",
             "description": "Signature expired. Please log in again."
         })
-    except jwt.InvalidTokenError:
-        raise AuthError({
+    except Exception, e:
+        raise GeneralError({
             "code": "Unauthorized",
-            "description": "Invalid token. Please log in again."
+            "description": "You get this message : {message}".format(message=e.message)
         })
 
 
@@ -57,17 +66,28 @@ def check_auth_refresh(token):
                 "code": "Unauthorized",
                 "description": "Token blacklisted. Please log in again."
             })
-        payload = jwt.decode(token, app.config.get('SECRET_REFRESH_KEY'))
+        payload, status = decode_refresh_token(app.config.get('SECRET_REFRESH_KEY'), token)
+
         return True, payload
-    except jwt.ExpiredSignatureError:
+    except InvalidIssuer:
+        raise AuthError({
+            "code": "Unauthorized",
+            "description": "Invalid Issuer. Please contact admin for this issues."
+        })
+    except InvalidAudience:
+        raise AuthError({
+            "code": "Unauthorized",
+            "description": "Invalid Audience. Please contact admin for this issues."
+        })
+    except ExpiredSignature:
         raise AuthError({
             "code": "Unauthorized",
             "description": "Signature expired. Please log in again."
         })
-    except jwt.InvalidTokenError:
-        raise AuthError({
+    except Exception, e:
+        raise GeneralError({
             "code": "Unauthorized",
-            "description": "Invalid token. Please log in again."
+            "description": "You get this message : {message}".format(message=e.message)
         })
 
 
@@ -188,6 +208,3 @@ def requires_device(f):
         return f(*args, **kwargs)
 
     return decorated
-
-
-

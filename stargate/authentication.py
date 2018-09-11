@@ -70,11 +70,3 @@ class Authentication(object):
         pass
 
 
-class BlacklistToken(object):
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def check_blacklist(auth_token):
-        return False
