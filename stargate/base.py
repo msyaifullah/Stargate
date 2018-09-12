@@ -5,6 +5,7 @@ import logging
 import datetime
 
 from stargate.helper import http_code
+from stargate.error import register_errors
 
 
 class Startgate(object):
@@ -13,7 +14,7 @@ class Startgate(object):
     """
 
     def __init__(self, app=None):
-        pass
+        register_errors(app)
 
 
 class StargateResponse(object):
