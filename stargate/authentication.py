@@ -1,3 +1,4 @@
+import re
 from stargate.helper.b_crypt import BCrypt
 
 
@@ -21,8 +22,49 @@ class Authentication(object):
         self.password_hash = BCrypt().generate_password_hash(password, secret).decode()
         return self.password_hash
 
-    def is_password(self, hash, password):
-        return BCrypt().check_password_hash(pw_hash=hash, password=password)
+    def is_password(self, username, password):
+
+        uhash = None
+        type = self.username_type(username)
+        # TODO: get data from db
+        if uhash is None or uhash is '':
+            return False
+
+        return BCrypt().check_password_hash(pw_hash=uhash, password=password)
+
+    def username_type(self, username):
+        if self.is_email(username):
+            return 'email'
+        elif self.is_phone(username):
+            return 'phone'
+        else:
+            return None
+
+    def is_email(self, username):
+        """
+        To check is username is email
+        :param username:
+        :return:
+        """
+        if len(username) > 7:
+            pattern = re.compile(r"^(?!\.)(\"\"([^\"\"\r\\]|\\[\"\"\r\\])*\"\"|([-a-z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)"
+                                 r"(?<!\.)@[a-z0-9][\w\.-]*[a-z0-9]\.[a-z][a-z\.]*[a-z]$")
+            return bool(pattern.match(username))
+        else:
+            return False
+
+    def is_phone(self, username):
+        """
+        To check is username is phone number
+        :param username:
+        :return:
+        """
+        pattern = re.compile(
+            r"^\(?(?P<prefix>(?=1)|\+|(?:0(?:0(?:0|1|9)?|1(?:0|1))?|119))[-. ]?\(?(?P<CC>1([-. ]?)"
+            r"[0-9]{3}|2(?:0|[0-9]{2})|3(?:[0-469]|[0-9]{2})|4(?:[013-9]|[0-9]{2})|5(?:[1-8]|[0-9]"
+            r"{2})|6(?:[0-6]|[0-9]{2})|7(?:[-. ]?[67]|[0-9]{3})|8(?:[1246]|[0-9]{2})|9(?:[0-58]|[0-9]"
+            r"{2}))(?:\)?[-. ])?(?P<number>(?:[0-9]+[-. ]?)+)$")
+        return bool(pattern.match(username))
 
     def send_notification(self, auth_verify_code):
         """
@@ -68,5 +110,3 @@ class Authentication(object):
         :return:
         """
         pass
-
-

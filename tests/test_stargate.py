@@ -112,6 +112,19 @@ class TestStargate(unittest.TestCase):
         print(token)
         print(decoded_payload)
 
+    def test_util(self):
+        from stargate.authentication import Authentication
+        self.assertEqual(Authentication().is_email('mas@gmail.com'), True)
+        self.assertEqual(Authentication().is_email('mas@gmailcom'), False)
+        self.assertEqual(Authentication().is_email('mas.com'), False)
+        self.assertEqual(Authentication().is_phone('081383999444'), True)
+        self.assertEqual(Authentication().is_phone('+6281383999444'), True)
+        self.assertEqual(Authentication().is_phone('6281383999444'), False)
+        self.assertEqual(Authentication().is_phone('U81383999444'), False)
+        self.assertEqual(Authentication().is_phone('011223344'), True)
+        self.assertEqual(Authentication().is_phone('+6011223344'), True)
+        self.assertEqual(Authentication().is_phone('6011223344'), False)
+
 
 
     # runs the unit tests in the module

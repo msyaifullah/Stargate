@@ -2,6 +2,7 @@ from flask import request
 from functools import wraps
 from flask import current_app as app
 
+from stargate.authentication import Authentication
 from stargate.error.error_auth import AuthError
 from stargate.error.error_general import GeneralError
 from stargate.error.error_device import DeviceError
@@ -20,7 +21,10 @@ def check_auth(username, password):
     password combination is valid.
 
     """
-    return True
+    if Authentication().is_password(username=username, password=password):
+        return True
+    else:
+        return False
 
 
 def check_auth_bearer(token):
