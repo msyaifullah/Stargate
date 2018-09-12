@@ -58,11 +58,10 @@ class TestStargate(unittest.TestCase):
 
     def test_equal_is_password(self):
         from stargate.authentication import Authentication
-        m = '$2b$10$5eTcbolJokO2aj309mJIhuSn3.gz/AUx67x29jquDWMu71X4JihsW'
-        n = '$2b$10$aqqSjRDLLj4T2ioUZ76diO6B.Gj7Y.afHjTGIbbbOsFnG10xSH6va'
-
-        self.assertEqual(Authentication().is_password(m, '123456'), True)
-        self.assertEqual(Authentication().is_password(n, '123456'), True)
+        m = Authentication().set_password('{th#pi[!RD{3N9w', 'AHxQZrkcgOKOuDSU04Xz')
+        n = Authentication().set_password('{th#pi[!RD{3N9w', 'nHxQZrkcgOKOuDSU04Xz')
+        self.assertEqual(Authentication().is_hash_valid(m, '{th#pi[!RD{3N9w', 'AHxQZrkcgOKOuDSU04Xz'), True)
+        self.assertEqual(Authentication().is_hash_valid(n, '{th#pi[!RD{3N9w', 'nHxQZrkcgOKOuDSU04Xz'), True)
 
     def test_equal_generate_token(self):
         from stargate.base import Startgate

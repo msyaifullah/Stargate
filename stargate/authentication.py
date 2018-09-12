@@ -1,5 +1,6 @@
 import re
-from stargate.helper.b_crypt import BCrypt
+
+from pbkdf2 import crypt
 
 
 class Authentication(object):
@@ -19,7 +20,7 @@ class Authentication(object):
         self.fcm = fcm
 
     def set_password(self, password, secret):
-        self.password_hash = BCrypt().generate_password_hash(password, secret).decode()
+        self.password_hash = crypt(word=password, salt=secret)
         return self.password_hash
 
     def is_password(self, username, password):
@@ -30,7 +31,19 @@ class Authentication(object):
         if uhash is None or uhash is '':
             return False
 
-        return BCrypt().check_password_hash(pw_hash=uhash, password=password)
+        return True
+        # return BCrypt().check_password_hash(pw_hash=uhash, password=password)
+
+    def is_hash_valid(self, uhash, password, secret):
+        """
+
+        :param password:
+        :param uhash:
+        :param secret:
+        :return:
+        """
+
+        return (uhash == crypt(password, secret))
 
     def username_type(self, username):
         if self.is_email(username):
