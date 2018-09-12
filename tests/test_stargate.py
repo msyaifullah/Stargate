@@ -95,7 +95,7 @@ class TestStargate(unittest.TestCase):
         from stargate.base import _jwt_decode
         from stargate.base import _jwt_encode
 
-        payload, token = _jwt_encode(secret='123456', user_id='12345', sender_id='sender-1234', recipients_id='recipients-1234')
+        payload, token = _jwt_encode(secret='123456', user_id='12345', sender_id='sender-1234', recipients_id=['recipients-1234', 'recipients-12345'])
         try:
             decoded_payload = _jwt_decode(secret='123456', auth_token=token, recipients_id='recipients-1234')
         except jwt.InvalidAudience:
@@ -111,6 +111,7 @@ class TestStargate(unittest.TestCase):
         print(payload)
         print(token)
         print(decoded_payload)
+        self.assertEqual(decoded_payload.get('sub') == '12345', True)
 
     def test_util(self):
         from stargate.authentication import Authentication
@@ -124,7 +125,5 @@ class TestStargate(unittest.TestCase):
         self.assertEqual(Authentication().is_phone('011223344'), True)
         self.assertEqual(Authentication().is_phone('+6011223344'), True)
         self.assertEqual(Authentication().is_phone('6011223344'), False)
-
-
 
     # runs the unit tests in the module
