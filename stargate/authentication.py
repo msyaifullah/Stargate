@@ -1,9 +1,13 @@
 import re
 
 from pbkdf2 import crypt
+from abc import abstractmethod
 
 
 class Authentication(object):
+    """
+    You need to overide this class and and register it as
+    """
     id = None
     name = None
     email = None
@@ -13,6 +17,14 @@ class Authentication(object):
 
     # New instance instantiation procedure
     def __init__(self, id=None, name=None, email=None, phone=None, fcm=None):
+        """
+
+        :param id:
+        :param name:
+        :param email:
+        :param phone:
+        :param fcm:
+        """
         self.id = id
         self.name = name
         self.email = email
@@ -20,19 +32,29 @@ class Authentication(object):
         self.fcm = fcm
 
     def set_password(self, password, secret):
+        """
+
+        :param password:
+        :param secret:
+        :return:
+        """
         self.password_hash = crypt(word=password, salt=secret)
         return self.password_hash
 
-    def is_password(self, username, password):
+    def is_password(self, username, password, secret):
+        """
 
-        uhash = None
-        type = self.username_type(username)
-        # TODO: get data from db
+        :param username:
+        :param password:
+        :param secret:
+        :return:
+        """
+        utype = self.username_type(username)
+        uhash = self.get_hash_by_username(username, utype)
         if uhash is None or uhash is '':
             return False
 
-        return True
-        # return BCrypt().check_password_hash(pw_hash=uhash, password=password)
+        return self.is_hash_valid(uhash, password, secret)
 
     def is_hash_valid(self, uhash, password, secret):
         """
@@ -46,6 +68,11 @@ class Authentication(object):
         return (uhash == crypt(password, secret))
 
     def username_type(self, username):
+        """
+
+        :param username:
+        :return:
+        """
         if self.is_email(username):
             return 'email'
         elif self.is_phone(username):
@@ -99,6 +126,7 @@ class Authentication(object):
 
         return carrier_type
 
+    @abstractmethod
     def send_email(self, message):
         """
 
@@ -107,6 +135,7 @@ class Authentication(object):
         """
         pass
 
+    @abstractmethod
     def send_sms(self, message):
         """
 
@@ -116,10 +145,21 @@ class Authentication(object):
         message = 'This is your secret code : \"{verification_code}\"'.format(verification_code=message)
         pass
 
+    @abstractmethod
     def send_fcm(self, message):
         """
 
         :param message:
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def get_hash_by_username(self, username, utype):
+        """
+
+        :param username: PhoneNumber | Email
+        :param utype: 'phone'| 'email'
         :return:
         """
         pass

@@ -2,17 +2,19 @@ from flask import request
 from functools import wraps
 from flask import current_app as app
 
-from stargate.authentication import Authentication
 from stargate.error.error_auth import AuthError
 from stargate.error.error_general import GeneralError
 from stargate.error.error_device import DeviceError
+from stargate.error import http_code
 
-from stargate.base import BlacklistToken
 from stargate.base import decode_auth_token
 from stargate.base import decode_refresh_token
+
 from jwt import InvalidIssuer
 from jwt import InvalidAudience
 from jwt import ExpiredSignature
+
+from stargate.helper import load_extensions
 
 
 def check_auth(username, password):
@@ -21,7 +23,13 @@ def check_auth(username, password):
     password combination is valid.
 
     """
-    if Authentication().is_password(username=username, password=password):
+    stargate = load_extensions(app)
+    auth_instance = stargate.class_authentication()
+
+    if auth_instance is not None and auth_instance.is_password(
+            username=username,
+            password=password,
+            secret=app.config.get('SECRET_PASSWORD')):
         return True
     else:
         return False
@@ -34,7 +42,7 @@ def check_auth_bearer(token):
     :return:
     """
     try:
-        payload, status = decode_auth_token(app.config.get('SECRET_KEY'), token)
+        payload = decode_auth_token(app.config.get('SECRET_AUTH_KEY'), token)
         return True, payload
     except InvalidIssuer:
         raise AuthError({
@@ -54,8 +62,8 @@ def check_auth_bearer(token):
     except Exception, e:
         raise GeneralError({
             "code": "Unauthorized",
-            "description": "You get this message : {message}".format(message=e.message)
-        })
+            "description": "{message}".format(message=e.message)
+        },'info', http_code.HTTP_428_PRECONDITION_REQUIRED)
 
 
 def check_auth_refresh(token):
@@ -65,12 +73,16 @@ def check_auth_refresh(token):
     :return:
     """
     try:
-        if BlacklistToken.check_blacklist(token):
+
+        stargate = load_extensions(app)
+        blacklist_instance = stargate.class_blacklist()
+
+        if blacklist_instance is not None and blacklist_instance.is_blacklisted(token):
             raise AuthError({
                 "code": "Unauthorized",
                 "description": "Token blacklisted. Please log in again."
             })
-        payload, status = decode_refresh_token(app.config.get('SECRET_REFRESH_KEY'), token)
+        payload = decode_refresh_token(app.config.get('SECRET_REFRESH_KEY'), token)
 
         return True, payload
     except InvalidIssuer:
@@ -91,8 +103,8 @@ def check_auth_refresh(token):
     except Exception, e:
         raise GeneralError({
             "code": "Unauthorized",
-            "description": "You get this message : {message}".format(message=e.message)
-        })
+            "description": "{message}".format(message=e.message)
+        }, 'info', http_code.HTTP_428_PRECONDITION_REQUIRED)
 
 
 def authenticate():

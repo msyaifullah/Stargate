@@ -4,17 +4,81 @@ import random
 import logging
 import datetime
 
-from stargate.helper import http_code
 from stargate.error import register_errors
+from blacklist_token import BlacklistToken
+from authentication import Authentication
+from stargate.error.error_object_not_found import ObjectNotFoundError
 
 
 class Startgate(object):
     """
         Collection of the Authentication action.
     """
+    _blacklist = None
+    _authentication = None
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, blacklist=None, authentication=None):
+        """
+
+        :param app:
+        """
+        # Register with application
+        if app is not None:
+            self.init_app(app, blacklist, authentication)
+
+    def init_app(self, app, blacklist=None, authentication=None):
+        """
+
+        :param app:
+        :param blacklist:
+        :param authentication:
+        :return:
+        """
+
+        if blacklist is None:
+            raise Exception("Need blacklist class")
+
+        if authentication is None:
+            raise Exception("Need authentication class")
+
+        if app.config.get('SECRET_AUTH_KEY') is None:
+            raise Exception("You need to set SECRET_AUTH_KEY")
+
+        if app.config.get('SECRET_REFRESH_KEY') is None:
+            raise Exception("You need to set SECRET_REFRESH_KEY")
+
+        if app.config.get('SECRET_PASSWORD') is None:
+            raise Exception("You need to set SECRET_PASSWORD")
+
         register_errors(app)
+        self._blacklist = blacklist
+        self._authentication = authentication
+        self._init_extension(app)
+
+    def _init_extension(self, app):
+        """
+
+        :return:
+        """
+        if not hasattr(app, 'extensions'):
+            app.extensions = dict()
+        app.extensions['stargate'] = self
+
+    def class_blacklist(self):
+        if self._blacklist is None and not isinstance(self._blacklist, BlacklistToken):
+            raise ObjectNotFoundError({
+                "description": "Object blacklist is missing"
+            })
+
+        return self._blacklist
+
+    def class_authentication(self):
+        if self._authentication is None and not isinstance(self._authentication, Authentication):
+            raise ObjectNotFoundError({
+                "description": "Object authentication is missing"
+            })
+
+        return self._authentication
 
 
 class StargateResponse(object):
@@ -27,16 +91,6 @@ class StargateResponse(object):
     def __init__(self, initial_data):
         for key in initial_data:
             setattr(self, key, initial_data[key])
-
-
-class BlacklistToken(object):
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def check_blacklist(auth_token):
-        return False
 
 
 def encode_auth_token(secret, user_id, sender_id=None, recipients_id=None, algorithm='HS256', expiration=3600):
@@ -65,7 +119,7 @@ def decode_auth_token(secret, auth_token, recipients_id=None):
     :return: integer|string
     """
     try:
-        return _jwt_decode(auth_token=auth_token, secret=secret, recipients_id=recipients_id), http_code.HTTP_201_CREATED
+        return _jwt_decode(auth_token=auth_token, secret=secret, recipients_id=recipients_id)
     except Exception, e:
         logging.error(e.message)
         raise
@@ -80,11 +134,7 @@ def decode_refresh_token(secret, auth_token, recipients_id=None):
     :return: integer|string
     """
     try:
-        is_blacklisted_token = BlacklistToken.check_blacklist(auth_token)
-        if is_blacklisted_token:
-            return 'Token blacklisted. Please log in again.', http_code.HTTP_403_FORBIDDEN
-        else:
-            return _jwt_decode(auth_token=auth_token, secret=secret, recipients_id=recipients_id)
+        return _jwt_decode(auth_token=auth_token, secret=secret, recipients_id=recipients_id)
     except Exception, e:
         logging.error(e.message)
         raise
