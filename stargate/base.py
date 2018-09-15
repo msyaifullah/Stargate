@@ -5,7 +5,6 @@ import logging
 import datetime
 
 from stargate.error import register_errors
-from blacklist_token import BlacklistToken
 from authentication import Authentication
 from stargate.error.error_object_not_found import ObjectNotFoundError
 
@@ -14,29 +13,24 @@ class Startgate(object):
     """
         Collection of the Authentication action.
     """
-    _blacklist = None
     _authentication = None
 
-    def __init__(self, app=None, blacklist=None, authentication=None):
+    def __init__(self, app=None, authentication=None):
         """
 
         :param app:
         """
         # Register with application
         if app is not None:
-            self.init_app(app, blacklist, authentication)
+            self.init_app(app, authentication)
 
-    def init_app(self, app, blacklist=None, authentication=None):
+    def init_app(self, app, authentication=None):
         """
 
         :param app:
-        :param blacklist:
         :param authentication:
         :return:
         """
-
-        if blacklist is None:
-            raise Exception("Need blacklist class")
 
         if authentication is None:
             raise Exception("Need authentication class")
@@ -51,7 +45,6 @@ class Startgate(object):
             raise Exception("You need to set SECRET_PASSWORD")
 
         register_errors(app)
-        self._blacklist = blacklist
         self._authentication = authentication
         self._init_extension(app)
 
@@ -63,14 +56,6 @@ class Startgate(object):
         if not hasattr(app, 'extensions'):
             app.extensions = dict()
         app.extensions['stargate'] = self
-
-    def class_blacklist(self):
-        if self._blacklist is None and not isinstance(self._blacklist, BlacklistToken):
-            raise ObjectNotFoundError({
-                "description": "Object blacklist is missing"
-            })
-
-        return self._blacklist
 
     def class_authentication(self):
         if self._authentication is None and not isinstance(self._authentication, Authentication):

@@ -14,7 +14,6 @@ from stargate.base import encode_auth_token
 from stargate.base import encode_refresh_token
 
 from .my_authentication import MyAuthentication
-from .my_blacklist import MyBlaclist
 
 # Create application
 app = Flask(__name__)
@@ -25,7 +24,8 @@ app.config['SECRET_PASSWORD'] = '132465798'
 app.config['SECRET_AUTH_KEY'] = '123456789'
 app.config['SECRET_REFRESH_KEY'] = '987654321'
 
-stargate_my = Startgate(app, MyBlaclist(), MyAuthentication())
+stargate_my = Startgate(app, MyAuthentication())
+
 
 # Flask views
 @app.route('/', methods=['GET'])

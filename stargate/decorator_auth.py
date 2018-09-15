@@ -63,7 +63,7 @@ def check_auth_bearer(token):
         raise GeneralError({
             "code": "Unauthorized",
             "description": "{message}".format(message=e.message)
-        },'info', http_code.HTTP_428_PRECONDITION_REQUIRED)
+        }, 'info', http_code.HTTP_428_PRECONDITION_REQUIRED)
 
 
 def check_auth_refresh(token):
@@ -73,17 +73,7 @@ def check_auth_refresh(token):
     :return:
     """
     try:
-
-        stargate = load_extensions(app)
-        blacklist_instance = stargate.class_blacklist()
-
-        if blacklist_instance is not None and blacklist_instance.is_blacklisted(token):
-            raise AuthError({
-                "code": "Unauthorized",
-                "description": "Token blacklisted. Please log in again."
-            })
         payload = decode_refresh_token(app.config.get('SECRET_REFRESH_KEY'), token)
-
         return True, payload
     except InvalidIssuer:
         raise AuthError({
@@ -221,6 +211,7 @@ def requires_device(f):
         device = request.headers
         if not device or not check_device(device):
             return valid_device()
+        kwargs['device_id'] = device.get('Device-Id')
         return f(*args, **kwargs)
 
     return decorated

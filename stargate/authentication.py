@@ -163,3 +163,31 @@ class Authentication(object):
         :return:
         """
         pass
+
+    @abstractmethod
+    def is_refresh_token(self, token):
+        """
+
+        :param token:
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def save_refresh_token(self, token, exp):
+        """
+
+        :param token:
+        :param exp:
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def remove_refresh_token(self, token):
+        """
+
+        :param token:
+        :return:
+        """
+        pass
