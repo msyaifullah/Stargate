@@ -157,6 +157,8 @@ def requires_bearer_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.headers.get('Authorization')
+        if not auth:
+            return authenticate()
         try:
             auth_type, auth_info = auth.split(None, 1)
             auth_type = auth_type.lower()
@@ -183,6 +185,8 @@ def requires_refresh_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.headers.get('Authorization')
+        if not auth:
+            return authenticate()
         try:
             auth_type, auth_info = auth.split(None, 1)
             auth_type = auth_type.lower()
