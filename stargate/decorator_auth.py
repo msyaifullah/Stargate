@@ -42,7 +42,7 @@ def check_auth_bearer(token):
     :return:
     """
     try:
-        payload = decode_auth_token(app.config.get('SECRET_AUTH_KEY'), token)
+        payload = decode_auth_token(app.config.get('SECRET_AUTH_KEY'), token, app.config.get('JWT_AUDIENCE'))
         return True, payload
     except InvalidIssuer:
         raise AuthError({
@@ -73,7 +73,7 @@ def check_auth_refresh(token):
     :return:
     """
     try:
-        payload = decode_refresh_token(app.config.get('SECRET_REFRESH_KEY'), token)
+        payload = decode_refresh_token(app.config.get('SECRET_REFRESH_KEY'), token, app.config.get('JWT_AUDIENCE'))
         return True, payload
     except InvalidIssuer:
         raise AuthError({
